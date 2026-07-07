@@ -40,7 +40,14 @@ function setup() {
 
   // weft palette
 
-  let palette = ["#960019", "#ff78f1", "#c300ff", "#ffffff", "#ffee00"];
+  let palette = [
+    "#960019",
+    "#ff78f1",
+    "#c300ff",
+    "#ffffff",
+    "#ffee00",
+    "#06d6ba",
+  ];
 
   for (let i = 0; i < WEFTS; i++) {
     weftColors[i] = color(palette[i % palette.length]);
