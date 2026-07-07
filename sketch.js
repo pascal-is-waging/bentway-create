@@ -4,7 +4,7 @@ const WEFTS = 196;
 // spacing between threads
 let cell = 22;
 
-let offsetX = 160;
+let offsetX = 300;
 let offsetY = 100;
 
 let draft = [];
@@ -16,6 +16,8 @@ let selectedType = "weft";
 let selectedIndex = 0;
 
 let picker;
+let imageButton;
+let patternButton;
 
 function setup() {
   createCanvas(offsetX + WARPS * cell + 100, offsetY + WEFTS * cell + 100);
@@ -37,6 +39,14 @@ function setup() {
   for (let i = 0; i < WARPS; i++) {
     warpColors[i] = color("#000000");
   }
+
+  imageButton = createButton("Export Image PNG");
+  imageButton.position(20, 140);
+  imageButton.mousePressed(exportImage);
+
+  patternButton = createButton("Export Weave Pattern");
+  patternButton.position(20, 175);
+  patternButton.mousePressed(exportPattern);
 
   // weft palette
 
@@ -199,4 +209,23 @@ function updateColor() {
 
 function colorToHex(c) {
   return "#" + hex(red(c), 2) + hex(green(c), 2) + hex(blue(c), 2);
+}
+function exportImage() {
+  saveCanvas("loom_image", "png");
+}
+function exportPattern() {
+  let pattern = {
+    warps: WARPS,
+    wefts: WEFTS,
+
+    // convert true/false into black/color
+
+    draft: draft.map((row) => row.map((cell) => (cell ? "black" : "color"))),
+
+    warpColors: warpColors.map(colorToHex),
+
+    weftColors: weftColors.map(colorToHex),
+  };
+
+  saveJSON(pattern, "weaving_pattern.json");
 }
