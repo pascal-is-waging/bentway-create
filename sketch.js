@@ -19,8 +19,17 @@ let picker;
 let imageButton;
 let patternButton;
 
+let paletteButtons = [];
+let importInput;
+
+let weftPalette = ["#960019", "#ff78f1", "#c300ff", "#ffffff", "#ffee00"];
+
 function setup() {
   createCanvas(offsetX + WARPS * cell + 100, offsetY + WEFTS * cell + 100);
+
+  importInput = createFileInput(importPattern);
+
+  importInput.position(20, 220);
 
   // create weave draft
 
@@ -63,13 +72,29 @@ function setup() {
     weftColors[i] = color(palette[i % palette.length]);
   }
 
-  picker = createColorPicker("#ff78f1");
+  // picker = createColorPicker("#ff78f1");
 
-  picker.position(20, 40);
+  // picker.position(20, 40);
 
-  picker.input(updateColor);
+  // picker.input(updateColor);
 
-  createP("Selected thread").position(20, 0);
+  createP("Palette").position(20, 60);
+
+  for (let i = 0; i < weftPalette.length; i++) {
+    let b = createButton("");
+
+    b.position(20 + i * 35, 105);
+
+    b.size(30, 30);
+
+    b.style("background", weftPalette[i]);
+
+    b.mousePressed(function () {
+      applyPaletteColor(weftPalette[i]);
+    });
+
+    paletteButtons.push(b);
+  }
 }
 
 function draw() {
@@ -82,7 +107,7 @@ function draw() {
   fill(0);
   noStroke();
 
-  text("Selected: " + selectedType + " " + selectedIndex, 20, 110);
+  text("Selected: " + selectedType + " " + selectedIndex, 20, 20);
 }
 
 function drawThreadColors() {
@@ -228,4 +253,60 @@ function exportPattern() {
   };
 
   saveJSON(pattern, "weaving_pattern.json");
+}
+function applyPaletteColor(hexColor) {
+  let c = color(hexColor);
+
+  if (selectedType === "warp") {
+    // keeps warp threads black
+    warpColors[selectedIndex] = color("#000000");
+  } else {
+    weftColors[selectedIndex] = c;
+  }
+
+  picker.value(hexColor);
+}
+function importPattern(file) {
+  if (file.subtype !== "json") {
+    console.log("Please select a JSON file");
+    return;
+  }
+
+  let data = file.data;
+
+  console.log(data);
+
+  // rebuild draft
+
+  draft = [];
+
+  for (let y = 0; y < data.wefts; y++) {
+    draft[y] = [];
+
+    for (let x = 0; x < data.warps; x++) {
+      if (data.draft[y][x] === "black") {
+        draft[y][x] = true;
+      } else {
+        draft[y][x] = false;
+      }
+    }
+  }
+
+  // rebuild warp colors
+
+  warpColors = [];
+
+  for (let i = 0; i < data.warps; i++) {
+    warpColors.push(color(data.warpColors[i]));
+  }
+
+  // rebuild weft colors
+
+  weftColors = [];
+
+  for (let i = 0; i < data.wefts; i++) {
+    weftColors.push(color(data.weftColors[i]));
+  }
+
+  console.log("Loaded:", data.warps, "warps x", data.wefts, "wefts");
 }
