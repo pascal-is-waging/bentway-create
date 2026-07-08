@@ -1,20 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>Sketch</title>
 
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="style.css" />
 
     <script src="libraries/p5.min.js"></script>
     <script src="libraries/p5.sound.min.js"></script>
     <script src="libraries/quicksettings.js"></script>
     <script src="libraries/p5.gui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   </head>
 
   <body>
+    <div class="sidebar">
+      <div class="pal">
+        <h3>Palette</h3>
+        <div id="pal-container"></div>
+      </div>
+      <div class="json-gen">
+        <h3>JSON Generator</h3>
+        <span class="comment">upload Jpeg to generate image</span>
+        <div id="fileInput"></div>
+      </div>
+      <div class="export-container">
+        <h3>export</h3>
+        <div id="exportImageButton">
+          <div class="comment">export image</div>
+        </div>
+        <div id="exportPatternButton">Export Weave Pattern</div>
+      </div>
+    </div>
+    <div class="canvas-container"></div>
     <script src="sketch.js"></script>
   </body>
 </html>

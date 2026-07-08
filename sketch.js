@@ -1,10 +1,11 @@
 const WARPS = 36;
 const WEFTS = 196;
+let img;
 
 // spacing between threads
 let cell = 22;
 
-let offsetX = 300;
+let offsetX = 360;
 let offsetY = 100;
 
 let draft = [];
@@ -21,93 +22,118 @@ let patternButton;
 
 let paletteButtons = [];
 let importInput;
+let colorcount = [];
+let pixels = [];
+let randomColor = false;
 
-let weftPalette = ["#960019", "#ff78f1", "#c300ff", "#ffffff", "#ffee00"];
+let weftPalette = [
+  "#960019",
+  "#ff78f1",
+  "#c300ff",
+  "#ffffff",
+  "#ffee00",
+  "#02a690",
+];
+let colorName = ["Burgundy", "Pink", "Purple", "White", "Yellow", "Teal"];
+let span = 4;
+let warpLen = [2250];
+let weftLen = [150, 150, 300, 300, 300, 600];
+const GROUP_SIZE = 39;
+const GROUP_GAP = 22 * 7;
 
 function setup() {
-  createCanvas(offsetX + WARPS * cell + 100, offsetY + WEFTS * cell + 100);
+  const gaps = floor((WEFTS - 1) / GROUP_SIZE);
 
-  importInput = createFileInput(importPattern);
-
-  importInput.position(20, 220);
-
-  // create weave draft
+  createCanvas(
+    offsetX + WARPS * cell + 100,
+    offsetY + WEFTS * cell + gaps * GROUP_GAP + 100,
+  );
+  // second = createGraphics(offsetX + 100, offsetY + 100);
 
   for (let y = 0; y < WEFTS; y++) {
     draft[y] = [];
 
     for (let x = 0; x < WARPS; x++) {
-      // random starting weave
-
       draft[y][x] = random() > 0.5;
     }
   }
 
-  // all warp threads black
-
   for (let i = 0; i < WARPS; i++) {
     warpColors[i] = color("#000000");
   }
+  let fileInput = select("#fileInput");
+
+  importInput = createFileInput(loadImageFile);
+  // importInput.position(20, 240);
+  importInput.parent("fileInput");
+  // createP("Import Weave JSON").position(20, 200).style("font-size", "15px");
+
+  randBtn = createButton("random colors OFF");
+  randBtn.style("background", "black");
+  randBtn.style("color", "white");
+  // imageButton.position(20, 400);
+  randBtn.mousePressed(() => {
+    randomColor = !randomColor;
+    randomColor
+      ? randBtn.html("random colors ON")
+      : randBtn.html("random colors OFF");
+  });
+  randBtn.parent("fileInput");
 
   imageButton = createButton("Export Image PNG");
-  imageButton.position(20, 140);
+  // imageButton.position(20, 400);
   imageButton.mousePressed(exportImage);
+  imageButton.parent("exportImageButton");
 
   patternButton = createButton("Export Weave Pattern");
-  patternButton.position(20, 175);
+  // patternButton.position(20, 425);
   patternButton.mousePressed(exportPattern);
+  patternButton.parent("exportPatternButton");
 
   // weft palette
 
-  let palette = [
-    "#960019",
-    "#ff78f1",
-    "#c300ff",
-    "#ffffff",
-    "#ffee00",
-    "#06d6ba",
-  ];
-
   for (let i = 0; i < WEFTS; i++) {
-    weftColors[i] = color(palette[i % palette.length]);
+    thing = i % weftPalette.length;
+    weftColors[i] = color(weftPalette[thing]);
+    weftLen[thing] -= span;
   }
 
-  // picker = createColorPicker("#ff78f1");
+  // createP("Palette").position(20, 60);
 
-  // picker.position(20, 40);
-
-  // picker.input(updateColor);
-
-  createP("Palette").position(20, 60);
-
+  let palContainer = select("#pal-container");
   for (let i = 0; i < weftPalette.length; i++) {
     let b = createButton("");
 
-    b.position(20 + i * 35, 105);
+    // b.position(20 + i * 35, 105);
 
     b.size(30, 30);
 
     b.style("background", weftPalette[i]);
 
     b.mousePressed(function () {
+      // b.style("border", "3px solid red");
       applyPaletteColor(weftPalette[i]);
     });
+    // colorcount[i] = createP(weftLen[i])
+    //   .position(20 + i * 35, 140)
+    //   .style("font-size", "15px");
+    colorcount[i] = createP(weftLen[i]).style("font-size", "15px");
+    let temp = createDiv("");
+    temp.child(b);
+    temp.child(colorcount[i]);
+
+    temp.parent("pal-container");
 
     paletteButtons.push(b);
   }
 }
 
 function draw() {
-  background(245);
+  background(255);
 
   drawThreadColors();
 
   drawWeave();
-
-  fill(0);
-  noStroke();
-
-  text("Selected: " + selectedType + " " + selectedIndex, 20, 20);
 }
 
 function drawThreadColors() {
@@ -124,9 +150,12 @@ function drawThreadColors() {
   // weft colors
 
   for (let y = 0; y < WEFTS; y++) {
+    let group = floor(y / GROUP_SIZE);
+    let py = offsetY + y * cell + group * GROUP_GAP;
+    strokeWeight(1);
+    stroke(0);
     fill(weftColors[y]);
-
-    rect(offsetX - 25, offsetY + y * cell, 25, cell);
+    rect(offsetX - 35, py, 25, cell);
   }
 }
 
@@ -135,19 +164,16 @@ function drawWeave() {
     for (let x = 0; x < WARPS; x++) {
       let px = offsetX + x * cell;
 
-      let py = offsetY + y * cell;
+      let group = floor(y / GROUP_SIZE);
+      let py = offsetY + y * cell + group * GROUP_GAP;
 
       noStroke();
-
-      // no grid background
 
       fill(245);
 
       rect(px, py, cell, cell);
 
       if (draft[y][x]) {
-        // warp above
-
         stroke(warpColors[x]);
 
         strokeWeight(12);
@@ -160,8 +186,6 @@ function drawWeave() {
 
         line(px + 2, py + cell / 2, px + cell - 2, py + cell / 2);
       } else {
-        // weft above
-
         stroke(warpColors[x]);
 
         strokeWeight(1);
@@ -188,14 +212,11 @@ function mousePressed() {
       selectedType = "warp";
 
       selectedIndex = x;
-
-      picker.value(colorToHex(warpColors[x]));
+      console.log("Selected warp thread:", selectedIndex);
     }
 
     return;
   }
-
-  // select weft thread
 
   if (mouseX > offsetX - 25 && mouseX < offsetX) {
     let y = floor((mouseY - offsetY) / cell);
@@ -204,14 +225,11 @@ function mousePressed() {
       selectedType = "weft";
 
       selectedIndex = y;
-
-      picker.value(colorToHex(weftColors[y]));
+      console.log("Selected wrfts thread:", selectedIndex);
     }
 
     return;
   }
-
-  // toggle weave
 
   let x = floor((mouseX - offsetX) / cell);
 
@@ -238,45 +256,151 @@ function colorToHex(c) {
 function exportImage() {
   saveCanvas("loom_image", "png");
 }
+// function exportPattern() {
+//   let pattern = {
+//     warps: WARPS,
+//     wefts: WEFTS,
+
+//     // convert true/false into black/color
+
+//     draft: draft.map((row, index) =>
+//       row.map((cell) =>
+//         cell ? "black" : colorName[findindex(weftColors[index])],
+//       ),
+//     ),
+
+//     warpColors: warpColors.map(colorToHex),
+
+//     weftColors: weftColors.map(colorToHex),
+//   };
+
+//   saveJSON(pattern, "weaving_pattern.json");
+// }
+
 function exportPattern() {
-  let pattern = {
-    warps: WARPS,
-    wefts: WEFTS,
+  const { jsPDF } = window.jspdf;
+  let pdf = new jsPDF();
 
-    // convert true/false into black/color
+  let totalGroups = Math.ceil(WEFTS / GROUP_SIZE);
 
-    draft: draft.map((row) => row.map((cell) => (cell ? "black" : "color"))),
+  for (let group = 0; group < totalGroups; group++) {
+    if (group > 0) {
+      pdf.addPage();
+    }
 
-    warpColors: warpColors.map(colorToHex),
+    let startRow = group * GROUP_SIZE;
+    let endRow = Math.min(startRow + GROUP_SIZE, WEFTS);
 
-    weftColors: weftColors.map(colorToHex),
-  };
+    let cellSize = 5;
+    let xOffset = 20;
+    let yOffset = 20;
 
-  saveJSON(pattern, "weaving_pattern.json");
+    for (let row = startRow; row < endRow; row++) {
+      for (let col = 0; col < WARPS; col++) {
+        let cellColor;
+
+        if (draft[row][col]) {
+          cellColor = warpColors[col];
+        } else {
+          cellColor = weftColors[row];
+        }
+
+        // convert p5 color to RGB
+        let c = color(cellColor);
+
+        pdf.setFillColor(red(c), green(c), blue(c));
+
+        pdf.rect(
+          xOffset + col * cellSize,
+          yOffset + (row - startRow) * cellSize,
+          cellSize,
+          cellSize,
+          "F",
+        );
+      }
+    }
+
+    // label each page
+    pdf.setFontSize(10);
+    pdf.text(`Rows ${startRow + 1} - ${endRow}`, 20, 10);
+  }
+
+  pdf.save("weaving_pattern.pdf");
 }
 function applyPaletteColor(hexColor) {
   let c = color(hexColor);
 
   if (selectedType === "warp") {
-    // keeps warp threads black
     warpColors[selectedIndex] = color("#000000");
   } else {
+    console.log(
+      c + " --- " + selectedIndex + " --- " + weftColors[selectedIndex],
+    );
+    let color1 = findindex(weftColors[selectedIndex]);
+    let color2 = findindex(c);
+    console.log(
+      "indexes color rightnow" + color1 + " --- color selected" + color2,
+    );
+    console.log(weftLen[color1] + " --- " + weftLen[color2]);
+    weftLen[color1] += span;
+    weftLen[color2] -= span;
+    console.log(weftLen[color1] + " --- " + weftLen[color2]);
+    // console.log(colorcount[i].html() + " --- " + weftLen[i]);
+
+    for (let i = 0; i < weftPalette.length; i++) {
+      colorcount[i].html(weftLen[i]);
+    }
     weftColors[selectedIndex] = c;
   }
 
-  picker.value(hexColor);
+  // picker.value(hexColor);
 }
-function importPattern(file) {
-  if (file.subtype !== "json") {
-    console.log("Please select a JSON file");
-    return;
+function findindex(col) {
+  for (let i = 0; i < weftPalette.length; i++) {
+    console.log("basssssssba " + color(weftPalette[i]) + " --- " + col);
+    if (color(weftPalette[i]).toString() === col.toString()) {
+      return i;
+    }
+  }
+}
+function importPattern() {
+  // if (file.subtype !== "json") {
+  //   console.log("Please select a JSON file");
+  //   return;
+  // }
+
+  // let data = file.data;
+  let draft2 = [];
+
+  for (let y = 0; y < WEFTS; y++) {
+    draft2[y] = [];
+
+    for (let x = 0; x < WARPS; x++) {
+      if (pixels[y][x] < 128) {
+        draft2[y][x] = "black";
+      } else {
+        draft2[y][x] = "color";
+      }
+    }
   }
 
-  let data = file.data;
+  let data = {
+    warps: WARPS,
+
+    wefts: WEFTS,
+
+    draft: draft2,
+
+    // your loom colors
+
+    warpColors: Array(WARPS).fill("#000000"),
+
+    weftColors: randomColor
+      ? Array.from({ length: WEFTS }, () => random(weftPalette))
+      : Array(WEFTS).fill("#ffffff"),
+  };
 
   console.log(data);
-
-  // rebuild draft
 
   draft = [];
 
@@ -292,15 +416,11 @@ function importPattern(file) {
     }
   }
 
-  // rebuild warp colors
-
   warpColors = [];
 
   for (let i = 0; i < data.warps; i++) {
     warpColors.push(color(data.warpColors[i]));
   }
-
-  // rebuild weft colors
 
   weftColors = [];
 
@@ -309,4 +429,73 @@ function importPattern(file) {
   }
 
   console.log("Loaded:", data.warps, "warps x", data.wefts, "wefts");
+}
+
+function loadImageFile(file) {
+  if (file.type === "image") {
+    img = loadImage(file.data, processImage);
+  }
+}
+
+function processImage() {
+  // resize image to loom size
+
+  img.resize(WARPS, WEFTS);
+
+  img.loadPixels();
+
+  pixels = [];
+
+  for (let y = 0; y < WEFTS; y++) {
+    pixels[y] = [];
+
+    for (let x = 0; x < WARPS; x++) {
+      let index = 4 * (y * WARPS + x);
+
+      let r = img.pixels[index];
+      let g = img.pixels[index + 1];
+      let b = img.pixels[index + 2];
+
+      // grayscale
+
+      let brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+      pixels[y][x] = brightness;
+    }
+  }
+
+  dither();
+  importPattern();
+}
+
+function dither() {
+  for (let y = 0; y < WEFTS; y++) {
+    for (let x = 0; x < WARPS; x++) {
+      let oldPixel = pixels[y][x];
+
+      let newPixel = oldPixel < 128 ? 0 : 255;
+
+      let error = oldPixel - newPixel;
+
+      pixels[y][x] = newPixel;
+
+      // Floyd Steinberg diffusion
+
+      if (x + 1 < WARPS) {
+        pixels[y][x + 1] += (error * 7) / 16;
+      }
+
+      if (x - 1 >= 0 && y + 1 < WEFTS) {
+        pixels[y + 1][x - 1] += (error * 3) / 16;
+      }
+
+      if (y + 1 < WEFTS) {
+        pixels[y + 1][x] += (error * 5) / 16;
+      }
+
+      if (x + 1 < WARPS && y + 1 < WEFTS) {
+        pixels[y + 1][x + 1] += (error * 1) / 16;
+      }
+    }
+  }
 }
