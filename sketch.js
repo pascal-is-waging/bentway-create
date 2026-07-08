@@ -201,44 +201,89 @@ function drawWeave() {
     }
   }
 }
+function getWeftY(mouseYValue) {
+  let yPos = mouseYValue - offsetY;
 
+  if (yPos < 0) return -1;
+
+  let group = floor(yPos / (GROUP_SIZE * cell + GROUP_GAP));
+
+  yPos -= group * GROUP_GAP;
+
+  return floor(yPos / cell);
+}
 function mousePressed() {
-  // select warp thread
-
+  // warp selection
   if (mouseY > offsetY - 25 && mouseY < offsetY) {
     let x = floor((mouseX - offsetX) / cell);
 
     if (x >= 0 && x < WARPS) {
       selectedType = "warp";
-
       selectedIndex = x;
-      console.log("Selected warp thread:", selectedIndex);
+      console.log("Selected warp:", selectedIndex);
     }
 
     return;
   }
 
-  if (mouseX > offsetX - 25 && mouseX < offsetX) {
-    let y = floor((mouseY - offsetY) / cell);
+  // weft selection
+  if (mouseX > offsetX - 35 && mouseX < offsetX) {
+    let y = getWeftY(mouseY);
 
     if (y >= 0 && y < WEFTS) {
       selectedType = "weft";
-
       selectedIndex = y;
-      console.log("Selected wrfts thread:", selectedIndex);
+      console.log("Selected weft:", selectedIndex);
     }
 
     return;
   }
 
+  // grid cell selection
   let x = floor((mouseX - offsetX) / cell);
-
-  let y = floor((mouseY - offsetY) / cell);
+  let y = getWeftY(mouseY);
 
   if (x >= 0 && x < WARPS && y >= 0 && y < WEFTS) {
     draft[y][x] = !draft[y][x];
   }
 }
+// function mousePressed() {
+//   // select warp thread
+//   let my = mouseY + scrollY;
+//   if (my > offsetY - 25 && my < offsetY) {
+//     let x = floor((mouseX - offsetX) / cell);
+
+//     if (x >= 0 && x < WARPS) {
+//       selectedType = "warp";
+
+//       selectedIndex = x;
+//       console.log("Selected warp thread:", selectedIndex);
+//     }
+
+//     return;
+//   }
+
+//   if (mouseX > offsetX - 25 && mouseX < offsetX) {
+//     let y = floor((my - offsetY) / cell);
+
+//     if (y >= 0 && y < WEFTS) {
+//       selectedType = "weft";
+
+//       selectedIndex = y;
+//       console.log("Selected wrfts thread:", selectedIndex);
+//     }
+
+//     return;
+//   }
+
+//   let x = floor((mouseX - offsetX) / cell);
+
+//   let y = floor((mouseY - offsetY) / cell);
+
+//   if (x >= 0 && x < WARPS && y >= 0 && y < WEFTS) {
+//     draft[y][x] = !draft[y][x];
+//   }
+// }
 
 function updateColor() {
   let c = color(picker.value());
